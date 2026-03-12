@@ -5,6 +5,8 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => ({
+  base: "/rockvilleapp/",
+
   server: {
     host: "::",
     port: 8080,
@@ -12,6 +14,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -24,9 +27,19 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ].filter(Boolean),
+
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "src"), 
     },
+  },
+
+  css: {
+    preprocessorOptions: {
+    },
+  },
+
+  optimizeDeps: {
+    include: ["firebase/app", "firebase/firestore", "firebase/analytics"], 
   },
 }));
