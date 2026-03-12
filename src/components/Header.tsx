@@ -33,14 +33,16 @@ const Header = () => {
 
   const isHome = location.pathname === '/';
 
+  const headerClass = isMobile
+    ? 'bg-gradient-to-r from-[#e11d48] via-[#b1122f] to-[#7f1026] border-b border-white/10 shadow-md'
+    : scrolled
+    ? 'bg-[rgba(177,18,47,0.96)] backdrop-blur-md border-b border-white/10 shadow-lg'
+    : 'bg-gradient-to-r from-[#e11d48] via-[#b1122f] to-[#7f1026] border-b border-white/10';
+
   return (
     <>
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-vodacom-red/95 backdrop-blur border-b border-white/10' : 'vodacom-gradient'
-        }`}
-      >
-        <div className={`container mx-auto px-4 ${scrolled ? 'py-2' : 'py-3'} transition-all`}>
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${headerClass}`}>
+        <div className={`container mx-auto px-4 ${scrolled ? 'py-2' : 'py-3'} transition-all duration-300`}>
           <div className="flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-3 group" end>
               <motion.div
@@ -52,13 +54,11 @@ const Header = () => {
 
               <div className="leading-tight">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-extrabold tracking-tight text-white">
-                    {scrolled && isMobile ? 'sConnecty' : 'sConnecty'}
-                  </span>
+                  <span className="text-lg font-extrabold tracking-tight text-white">sConnecty</span>
                   <span className="text-xs font-semibold text-white/70">MZ</span>
                 </div>
 
-                <span className="text-[11px] text-white/70 hidden sm:block">
+                <span className="hidden sm:block text-[11px] text-white/70">
                   Internet • Chamadas • Streaming
                 </span>
               </div>
@@ -70,7 +70,7 @@ const Header = () => {
                   <NavLink
                     to={link.to}
                     end={link.to === '/'}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 relative"
+                    className="relative flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all"
                     activeClassName="text-white"
                     inactiveClassName="text-white/80 hover:text-white"
                   >
@@ -78,12 +78,12 @@ const Header = () => {
                     {link.label}
                   </NavLink>
 
-                  {(location.pathname === link.to || (link.to === '/' && isHome)) ? (
+                  {(location.pathname === link.to || (link.to === '/' && isHome)) && (
                     <motion.div
                       layoutId="nav-underline"
-                      className="absolute left-3 right-3 -bottom-1 h-[2px] bg-white/80 rounded-full"
+                      className="absolute left-3 right-3 -bottom-1 h-[2px] rounded-full bg-white/80"
                     />
-                  ) : null}
+                  )}
                 </div>
               ))}
 
@@ -91,7 +91,7 @@ const Header = () => {
                 href="https://wa.me/258856001899"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-2 px-4 py-2 rounded-xl bg-white/15 hover:bg-white/20 text-white text-sm font-extrabold transition-colors inline-flex items-center gap-2"
+                className="ml-2 inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-white/20"
               >
                 Atendimento
                 <ChevronRight className="h-4 w-4" />
@@ -99,7 +99,7 @@ const Header = () => {
             </nav>
 
             <button
-              className="md:hidden text-white p-2.5 rounded-xl bg-white/10 hover:bg-white/15 transition-colors"
+              className="rounded-xl bg-white/15 p-2.5 text-white shadow-sm transition-colors hover:bg-white/20 md:hidden"
               onClick={() => setOpen((v) => !v)}
               aria-label="Menu"
             >
@@ -124,22 +124,22 @@ const Header = () => {
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-                className="fixed top-0 right-0 z-50 h-full w-[320px] max-w-[85vw] bg-vodacom-red shadow-2xl md:hidden flex flex-col"
+                className="fixed top-0 right-0 z-50 flex h-full w-[320px] max-w-[85vw] flex-col bg-[#990f2e] shadow-2xl md:hidden"
               >
-                <div className="p-5 border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-white/10 p-5">
                   <div className="flex items-center gap-3">
                     <div className="rounded-2xl bg-white/15 p-2.5">
                       <Wifi className="h-5 w-5 text-white" />
                     </div>
                     <div className="leading-tight">
-                      <div className="text-white font-extrabold">sConnecty</div>
-                      <div className="text-white/70 text-xs">Atendimento 24/7</div>
+                      <div className="font-extrabold text-white">sConnecty</div>
+                      <div className="text-xs text-white/70">Atendimento 24/7</div>
                     </div>
                   </div>
 
                   <button
                     onClick={() => setOpen(false)}
-                    className="p-2 rounded-xl bg-white/10 hover:bg-white/15 transition-colors text-white"
+                    className="rounded-xl bg-white/10 p-2 text-white transition-colors hover:bg-white/15"
                     aria-label="Fechar"
                   >
                     <X className="h-5 w-5" />
@@ -152,7 +152,7 @@ const Header = () => {
                       key={link.to}
                       to={link.to}
                       end={link.to === '/'}
-                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors"
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors"
                       activeClassName="bg-white/18 text-white"
                       inactiveClassName="text-white/85 hover:bg-white/10 hover:text-white"
                       onClick={() => setOpen(false)}
@@ -166,21 +166,19 @@ const Header = () => {
                     href="https://wa.me/258856001899"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 flex items-center justify-between px-4 py-3 rounded-2xl bg-white/15 hover:bg-white/20 transition-colors text-white font-extrabold"
+                    className="mt-2 flex items-center justify-between rounded-2xl bg-white/15 px-4 py-3 font-extrabold text-white transition-colors hover:bg-white/20"
                   >
                     WhatsApp
                     <ChevronRight className="h-5 w-5" />
                   </a>
                 </div>
 
-                <div className="mt-auto p-5 border-t border-white/10">
-                  <div className="flex items-center gap-2 text-white/70 text-xs">
+                <div className="mt-auto border-t border-white/10 p-5">
+                  <div className="flex items-center gap-2 text-xs text-white/70">
                     <Clock className="h-4 w-4" />
                     Atendimento 24/7
                   </div>
-                  <div className="mt-3 text-center text-white/50 text-xs">
-                    © 2026 sConnecty MZ
-                  </div>
+                  <div className="mt-3 text-center text-xs text-white/50">© 2026 sConnecty MZ</div>
                 </div>
               </motion.aside>
             </>
