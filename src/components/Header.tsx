@@ -42,7 +42,6 @@ const Header = () => {
       >
         <div className={`container mx-auto px-4 ${scrolled ? 'py-2' : 'py-3'} transition-all`}>
           <div className="flex items-center justify-between">
-            {/* Logo */}
             <NavLink to="/" className="flex items-center gap-3 group" end>
               <motion.div
                 whileHover={{ rotate: 10, scale: 1.05 }}
@@ -54,19 +53,17 @@ const Header = () => {
               <div className="leading-tight">
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-extrabold tracking-tight text-white">
-                    {scrolled && isMobile ? 'ROCKVILLE' : 'ROCKVILLE'}
+                    {scrolled && isMobile ? 'sConnecty' : 'sConnecty'}
                   </span>
                   <span className="text-xs font-semibold text-white/70">MZ</span>
                 </div>
 
-                {/* removido "revendedor autorizado" */}
                 <span className="text-[11px] text-white/70 hidden sm:block">
                   Internet • Chamadas • Streaming
                 </span>
               </div>
             </NavLink>
 
-            {/* Desktop nav */}
             <nav className="hidden md:flex items-center gap-2">
               {links.map((link) => (
                 <div key={link.to} className="relative">
@@ -101,7 +98,6 @@ const Header = () => {
               </a>
             </nav>
 
-            {/* Mobile toggle */}
             <button
               className="md:hidden text-white p-2.5 rounded-xl bg-white/10 hover:bg-white/15 transition-colors"
               onClick={() => setOpen((v) => !v)}
@@ -112,7 +108,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile drawer */}
         <AnimatePresence>
           {open && (
             <>
@@ -137,7 +132,7 @@ const Header = () => {
                       <Wifi className="h-5 w-5 text-white" />
                     </div>
                     <div className="leading-tight">
-                      <div className="text-white font-extrabold">ROCKVILLE</div>
+                      <div className="text-white font-extrabold">sConnecty</div>
                       <div className="text-white/70 text-xs">Atendimento 24/7</div>
                     </div>
                   </div>
@@ -184,7 +179,7 @@ const Header = () => {
                     Atendimento 24/7
                   </div>
                   <div className="mt-3 text-center text-white/50 text-xs">
-                    © 2026 Rockville MZ
+                    © 2026 sConnecty MZ
                   </div>
                 </div>
               </motion.aside>
@@ -193,7 +188,6 @@ const Header = () => {
         </AnimatePresence>
       </header>
 
-      {/* Progress bar apenas na home */}
       {isHome && (
         <motion.div
           className="h-1 bg-gradient-to-r from-yellow-400 to-orange-500"

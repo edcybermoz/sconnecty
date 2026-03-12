@@ -89,7 +89,6 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero (mais clean/profissional) */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${heroBg})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/65 to-background" />
@@ -102,7 +101,7 @@ const Index = () => {
             className="max-w-4xl"
           >
             <h1 className="text-4xl md:text-6xl font-black text-white leading-tight">
-              ROCKVILLE
+              sConnecty
               <span className="block text-vodacom-red">Internet • Chamadas • Streaming</span>
             </h1>
 
@@ -138,7 +137,6 @@ const Index = () => {
             </div>
           </motion.div>
 
-          {/* Barra de pesquisa + tabs (profissional) */}
           <div className="mt-10" id="packages">
             <motion.div
               initial={{ opacity: 0, y: 14 }}
@@ -147,7 +145,6 @@ const Index = () => {
               className="bg-card/90 backdrop-blur rounded-3xl border border-border shadow-xl"
             >
               <div className="p-4 md:p-5 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-                {/* Search */}
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="h-4 w-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
@@ -163,7 +160,6 @@ const Index = () => {
                   </p>
                 </div>
 
-                {/* Stats compact */}
                 <div className="flex gap-3">
                   {stats.map((s) => {
                     const Icon = s.icon;
@@ -182,7 +178,6 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Tabs */}
               <div className="px-4 md:px-5 pb-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -226,7 +221,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Seções (profissional + mais espaço) */}
       <div className="container mx-auto px-4 py-10 md:py-14">
         {categories
           .filter((cat) => activeCategory === 'todas' || cat.key === activeCategory)
@@ -286,7 +280,6 @@ const Index = () => {
                   ))}
                 </div>
 
-                {/* botão mobile + hint */}
                 {hasMore && (
                   <div className="mt-5 flex flex-col sm:hidden gap-2">
                     <button
@@ -307,14 +300,12 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* divider */}
                 <div className="mt-10 border-t border-border" />
               </section>
             );
           })}
       </div>
 
-      {/* CTA (mais corporate) */}
       <section className="container mx-auto px-4 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
@@ -358,18 +349,17 @@ const Index = () => {
                 <li>✓ Ativação imediata</li>
                 <li>✓ Suporte no WhatsApp</li>
                 <li>✓ Pagamento M-Pesa / E-Mola / Depois</li>
-                <li>✓ Referência Rockville para rastreio</li>
+                <li>✓ Referência sConnecty para rastreio do pedido</li>
               </ul>
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-card border-t border-border py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="font-semibold text-foreground">
-            © 2026 ROCKVILLE
+            © 2026 sConnecty
           </p>
           <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
           <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>

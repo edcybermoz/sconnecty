@@ -37,10 +37,7 @@ interface CheckoutModalProps {
 const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-
-  // ✅ extra para streaming/giftcards
   const [extraInfo, setExtraInfo] = useState('');
-
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('later');
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
 
@@ -58,7 +55,7 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
 
   const extraLabel = useMemo(() => {
     if (pkg.category === 'streaming') return 'Email/Conta para ativação';
-    if (pkg.category === 'giftcards') return 'Email/WhatsApp para enviar o código';
+    if (pkg.category === 'giftcards') return 'Email/WhatsApp para envio do código';
     return 'Informação adicional';
   }, [pkg.category]);
 
@@ -69,24 +66,33 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
     return pkg.provider;
   }, [pkg.provider]);
 
-  // Validar telefone em tempo real
+  const modalTitle = useMemo(() => {
+    if (step === 'payment') return 'Instruções de Pagamento';
+    if (step === 'success') return 'Pedido Registado!';
+    return pkg.category === 'streaming' || pkg.category === 'giftcards'
+      ? 'Finalizar Pedido'
+      : 'Comprar Pacote';
+  }, [step, pkg.category]);
+
   const handlePhoneChange = (value: string) => {
     setPhone(value);
     const cleaned = cleanPhoneNumber(value);
 
-    // ✅ valida só quando já tem algo digitado
     if (cleaned && !validatePhoneNumber(cleaned)) {
-      // o teu validate aceita 84/85/86/87 + 7 dígitos = 9 dígitos
       setPhoneError('Número inválido. Use 84/85/86/87 + 7 dígitos (ex: 84 123 4567)');
     } else {
       setPhoneError('');
     }
   };
 
-  const handleCopyNumber = (number: string) => {
-    navigator.clipboard.writeText(number.replace(/\s/g, ''));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyNumber = async (number: string) => {
+    try {
+      await navigator.clipboard.writeText(number.replace(/\s/g, ''));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Erro ao copiar número:', error);
+    }
   };
 
   const getPaymentInstructions = (method: PaymentMethod) => {
@@ -99,11 +105,11 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
         title: 'Pagar com M-Pesa',
         number,
         steps: [
-          'Acesse o menu M-PESA no seu telefone',
-          'Selecione "1. Enviar Dinheiro"',
+          'Acesse o menu M-Pesa no seu telefone',
+          'Selecione "Enviar Dinheiro"',
           `Digite o número: ${number}`,
           `Digite o valor: ${formatMZN(pkg.price)}`,
-          'Digite seu PIN M-PESA',
+          'Digite o seu PIN M-Pesa',
           'Confirme a transação',
           'Guarde o SMS de confirmação'
         ]
@@ -114,11 +120,11 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
       title: 'Pagar com E-Mola',
       number,
       steps: [
-        'Acesse o menu E-MOLA no seu telefone',
-        'Selecione "1. Transferir"',
+        'Acesse o menu E-Mola no seu telefone',
+        'Selecione "Transferir"',
         `Digite o número: ${number}`,
         `Digite o valor: ${formatMZN(pkg.price)}`,
-        'Digite seu PIN E-MOLA',
+        'Digite o seu PIN E-Mola',
         'Confirme a transação',
         'Guarde o SMS de confirmação'
       ]
@@ -129,7 +135,7 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      alert('Por favor, informe seu nome');
+      alert('Por favor, informe o seu nome');
       return;
     }
 
@@ -150,20 +156,18 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
     try {
       const ref = generateReference();
 
-      // ✅ IMPORTANTÍSSIMO: salvar telefone LIMPO (sem espaços)
       const orderData: Omit<Order, 'id'> = {
         reference: ref,
         packageId: pkg.id,
         packageName: pkg.name,
         customerName: name.trim(),
-        customerPhone: cleanedPhone, // ✅ limpo
+        customerPhone: cleanedPhone,
         price: pkg.price,
         date: new Date().toISOString(),
         status: ORDER_STATUS.PENDING,
         paymentMethod: paymentMethod === 'later' ? null : paymentMethod,
       };
 
-      // ✅ guardar extraInfo no Firestore sem quebrar o type do Order
       if (needsExtraInfo) {
         (orderData as any).extraInfo = extraInfo.trim();
         (orderData as any).provider = pkg.provider ?? null;
@@ -178,7 +182,7 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
       else setStep('payment');
     } catch (error) {
       console.error('Erro Firestore:', error);
-      alert('Erro ao salvar pedido. Verifique sua conexão e tente novamente.');
+      alert('Erro ao salvar pedido. Verifique a conexão e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -208,7 +212,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
   };
 
   const headerSubtitle = useMemo(() => {
-    // ✅ não assume pkg.data
     const parts: string[] = [];
     if (providerLabel) parts.push(providerLabel);
     if (pkg.data) parts.push(pkg.data);
@@ -216,7 +219,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
     return parts.join(' • ');
   }, [providerLabel, pkg.data, pkg.validity]);
 
-  // telefone formatado só para UI
   const formattedPhonePreview = useMemo(() => {
     const cleaned = cleanPhoneNumber(phone);
     return cleaned.length === 9 ? formatPhoneNumber(cleaned) : phone;
@@ -238,7 +240,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
           className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="bg-vodacom-red p-6 text-white relative">
             <button
               onClick={onClose}
@@ -247,11 +248,7 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
               <X className="h-5 w-5" />
             </button>
 
-            <h2 className="text-xl font-bold">
-              {step === 'form' && 'Comprar Produto'}
-              {step === 'payment' && 'Instruções de Pagamento'}
-              {step === 'success' && 'Compra Registada!'}
-            </h2>
+            <h2 className="text-xl font-bold">{modalTitle}</h2>
 
             <p className="text-sm text-white/80 mt-1">
               {pkg.name}
@@ -259,7 +256,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
             </p>
           </div>
 
-          {/* FORM */}
           {step === 'form' && (
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
@@ -295,7 +291,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
                   } transition-all`}
                 />
 
-                {/* preview formatado */}
                 {!phoneError && cleanPhoneNumber(phone).length === 9 && (
                   <p className="text-xs text-gray-500 mt-1">
                     Será usado: <span className="font-semibold">{formattedPhonePreview}</span>
@@ -310,7 +305,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
                 )}
               </div>
 
-              {/* ✅ Campo extra para streaming/giftcards */}
               {needsExtraInfo && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -324,19 +318,22 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
                       maxLength={120}
                       value={extraInfo}
                       onChange={(e) => setExtraInfo(e.target.value)}
-                      placeholder={pkg.category === 'streaming' ? 'ex: email@gmail.com' : 'ex: email@gmail.com / 84xxxxxxx'}
+                      placeholder={
+                        pkg.category === 'streaming'
+                          ? 'ex: email@gmail.com'
+                          : 'ex: email@gmail.com / 84xxxxxxx'
+                      }
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-vodacom-red/20 focus:border-vodacom-red transition-all"
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     {pkg.category === 'giftcards'
                       ? 'Enviaremos o código digital para este contacto.'
-                      : 'Usaremos esta informação para ativação.'}
+                      : 'Usaremos esta informação para ativação do serviço.'}
                   </p>
                 </div>
               )}
 
-              {/* Pagamento */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Método de Pagamento
@@ -389,14 +386,12 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
                 </div>
               </div>
 
-              {/* Resumo (dinâmico) */}
               <div className="bg-gray-50 rounded-xl p-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Produto</span>
                   <span className="font-semibold text-gray-900">{pkg.name}</span>
                 </div>
 
-                {/* Só mostra dados/validade se existir */}
                 {pkg.data && (
                   <div className="flex justify-between text-sm mt-2">
                     <span className="text-gray-500">Dados</span>
@@ -437,7 +432,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
             </form>
           )}
 
-          {/* PAYMENT */}
           {step === 'payment' && paymentMethod !== 'later' && paymentMethod !== null && (
             <div className="p-6 space-y-4">
               {(() => {
@@ -516,7 +510,6 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
             </div>
           )}
 
-          {/* SUCCESS */}
           {step === 'success' && (
             <div className="p-6 text-center space-y-4">
               <div className="flex justify-center">
@@ -527,7 +520,7 @@ const CheckoutModal = ({ pkg, onClose }: CheckoutModalProps) => {
 
               <div>
                 <p className="text-lg font-bold text-gray-900">
-                  {paymentMethod === 'later' ? 'Compra Registada!' : 'Pagamento Confirmado!'}
+                  {paymentMethod === 'later' ? 'Pedido registado!' : 'Pagamento confirmado!'}
                 </p>
 
                 <p className="text-sm text-gray-500 mt-1">Sua referência:</p>

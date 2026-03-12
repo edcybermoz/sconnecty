@@ -27,7 +27,7 @@ import type { Order, OrderStats, PaymentMethod } from '@/lib/types';
 const ADMIN_PIN = '0698';
 
 // sessão admin
-const ADMIN_SESSION_KEY = 'rockville_admin_session';
+const ADMIN_SESSION_KEY = 'sconnecty_admin_session';
 const SESSION_HOURS = 24;
 
 type DatePreset = 'all' | 'today' | '7d' | '30d';
@@ -54,9 +54,6 @@ const Admin = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showStats, setShowStats] = useState(true);
 
-  // ============================
-  // Sessão persistente
-  // ============================
   useEffect(() => {
     const raw = localStorage.getItem(ADMIN_SESSION_KEY);
     if (!raw) return;
@@ -85,9 +82,6 @@ const Admin = () => {
     setPin('');
   };
 
-  // ============================
-  // Carregar pedidos
-  // ============================
   const loadOrders = async () => {
     setLoading(true);
     try {
@@ -108,9 +102,6 @@ const Admin = () => {
     if (authenticated) loadOrders();
   }, [authenticated]);
 
-  // ============================
-  // Login admin
-  // ============================
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (pin === ADMIN_PIN) {
@@ -121,9 +112,6 @@ const Admin = () => {
     }
   };
 
-  // ============================
-  // Ações
-  // ============================
   const handleQuickAction = async (id: string, action: 'confirm' | 'cancel' | 'pending') => {
     try {
       switch (action) {
@@ -166,7 +154,7 @@ const Admin = () => {
     try {
       await updateOrder(editingOrder.id, {
         customerName: editingOrder.customerName,
-        customerPhone: cleanedPhone, // ✅ salva limpo
+        customerPhone: cleanedPhone,
         status: editingOrder.status,
       });
       setEditingOrder(null);
@@ -176,9 +164,6 @@ const Admin = () => {
     }
   };
 
-  // ============================
-  // Filtros (status + pagamento + data + search)
-  // ============================
   const withinPreset = (iso: string) => {
     if (datePreset === 'all') return true;
 
@@ -282,9 +267,6 @@ const Admin = () => {
     URL.revokeObjectURL(url);
   };
 
-  // ============================
-  // UI: Login
-  // ============================
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-background">
@@ -335,7 +317,7 @@ const Admin = () => {
 
         <footer className="bg-card border-t border-border py-8 mt-auto">
           <div className="container mx-auto px-4 text-center">
-            <p className="font-semibold text-foreground">© 2026 ROCKVILLE — Moçambique</p>
+            <p className="font-semibold text-foreground">© 2026 sConnecty — Moçambique</p>
             <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
             <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>
           </div>
@@ -344,15 +326,11 @@ const Admin = () => {
     );
   }
 
-  // ============================
-  // UI: Admin Panel
-  // ============================
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <div className="flex-1 container mx-auto px-4 py-8">
-        {/* Top */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
@@ -403,7 +381,6 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Stats */}
         {showStats && stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
             <StatCard label="Total" value={stats.total.toString()} icon={Package} color="bg-blue-500" />
@@ -415,7 +392,6 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -429,7 +405,6 @@ const Admin = () => {
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            {/* Date preset */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <select
@@ -444,7 +419,6 @@ const Admin = () => {
               </select>
             </div>
 
-            {/* Payment filter */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <select
@@ -461,7 +435,6 @@ const Admin = () => {
             </div>
           </div>
 
-          {/* Status chips */}
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
             {(['todos', 'pendente', 'confirmado', 'cancelado'] as const).map(f => (
               <button
@@ -477,7 +450,6 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* List */}
         <div className="space-y-3">
           {loading ? (
             <div className="text-center py-16">
@@ -513,7 +485,6 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Modais */}
         <AnimatePresence>
           {deleteConfirm && (
             <Modal
@@ -556,7 +527,7 @@ const Admin = () => {
 
       <footer className="bg-card border-t border-border py-8 mt-auto">
         <div className="container mx-auto px-4 text-center">
-          <p className="font-semibold text-foreground">© 2026 ROCKVILLE</p>
+          <p className="font-semibold text-foreground">© 2026 sConnecty</p>
           <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
           <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>
         </div>
@@ -565,9 +536,6 @@ const Admin = () => {
   );
 };
 
-// ============================
-// Components
-// ============================
 const StatCard = ({ label, value, icon: Icon, color }: any) => (
   <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-shadow">
     <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-2`}>

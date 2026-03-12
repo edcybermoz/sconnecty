@@ -26,10 +26,10 @@ export const internetPackages: InternetPackage[] = [
   { id: 'calls-19gb', name: 'Chamadas + 19.2GB', data: '19.2GB', validity: '30 dias', price: 760, description: 'Chamadas + SMSs ilimitadas + 19.2GB', category: 'chamadas' },
   { id: 'calls-31gb', name: 'Chamadas + 31.2GB', data: '31.2GB', validity: '30 dias', price: 1150, description: 'Chamadas + SMSs ilimitadas + 31.2GB', category: 'chamadas' },
 
-  // ✅ Streaming (troca os preços)
-  { id: 'spotify-1m', name: 'Spotify Premium — 1 Mês', validity: '30 dias', price: 0, description: 'Sem anúncios • Premium', category: 'streaming', provider: 'Spotify', notes: 'Ativação rápida' },
-  { id: 'netflix-1m', name: 'Netflix — 1 Mês', validity: '30 dias', price: 0, description: 'Plano conforme disponibilidade', category: 'streaming', provider: 'Netflix', notes: 'Ativação rápida' },
-  { id: 'applemusic-1m', name: 'Apple Music — 1 Mês', validity: '30 dias', price: 0, description: 'Músicas ilimitadas', category: 'streaming', provider: 'AppleMusic', notes: 'Ativação rápida' },
+  // ✅ Streaming (preço base + 100 MT de taxa de ativação)
+  { id: 'spotify-1m', name: 'Spotify Premium — 1 Mês', validity: '30 dias', price: 312, description: 'Sem anúncios • Premium', category: 'streaming', provider: 'Spotify', notes: 'Ativação rápida' },
+  { id: 'netflix-1m', name: 'Netflix — 1 Mês', validity: '30 dias', price: 616, description: 'Plano conforme disponibilidade', category: 'streaming', provider: 'Netflix', notes: 'Ativação rápida' },
+  { id: 'applemusic-1m', name: 'Apple Music — 1 Mês', validity: '30 dias', price: 429, description: 'Músicas ilimitadas', category: 'streaming', provider: 'AppleMusic', notes: 'Ativação rápida' },
 
   // ✅ Gift Cards
   { id: 'gplay-100', name: 'Google Play — 100 MT', price: 100, description: 'Cartão digital para apps e jogos', category: 'giftcards', provider: 'GooglePlay', notes: 'Código digital' },
@@ -60,7 +60,7 @@ export const PAYMENT_METHODS = {
 // --------------------------
 export function generateReference(): string {
   const num = Math.floor(Math.random() * 900000) + 100000;
-  return `rockville#${num}`;
+  return `sconnecty#${num}`;
 }
 
 // --------------------------
@@ -170,7 +170,7 @@ export function validatePhoneNumber(phone: string): boolean {
   // Remove espaços e caracteres especiais
   const cleaned = phone.replace(/\s+/g, '').replace(/[^0-9]/g, '');
   
-  // Valida números moçambicanos (84/85 + 7 dígitos)
+  // Valida números moçambicanos (84/85/86/87 + 7 dígitos)
   const regex = /^[8][4-7]\d{7}$/;
   return regex.test(cleaned);
 }
@@ -249,7 +249,7 @@ export function sendWhatsApp(order: Order): void {
   const paymentMethodText = getPaymentMethodLabel(order.paymentMethod);
   
   const message = encodeURIComponent(
-    `🛒 *Compra Rockville Internet*\n\n` +
+    `🛒 *Compra sConnecty*\n\n` +
     `📋 *Referência:* ${order.reference}\n` +
     `📦 *Pacote:* ${order.packageName}\n` +
     `👤 *Cliente:* ${order.customerName}\n` +
@@ -266,7 +266,7 @@ export function sendPaymentConfirmationWhatsApp(order: Order): void {
   const paymentMethodText = getPaymentMethodLabel(order.paymentMethod);
   
   const message = encodeURIComponent(
-    `✅ *Pagamento Confirmado - Rockville Internet*\n\n` +
+    `✅ *Pagamento Confirmado - sConnecty*\n\n` +
     `📋 *Referência:* ${order.reference}\n` +
     `📦 *Pacote:* ${order.packageName}\n` +
     `👤 *Cliente:* ${order.customerName}\n` +
@@ -286,7 +286,7 @@ export function sendSMS(order: Order): void {
     : 'N/E';
   
   const message = encodeURIComponent(
-    `Rockville - Ref:${order.reference} | ${order.packageName} | ${order.customerName} | ${order.customerPhone} | ${formatMZN(order.price)} | Pag:${paymentMethodText} | Status:${statusText}`
+    `sConnecty - Ref:${order.reference} | ${order.packageName} | ${order.customerName} | ${order.customerPhone} | ${formatMZN(order.price)} | Pag:${paymentMethodText} | Status:${statusText}`
   );
   window.open(`sms:+258856001899?body=${message}`, '_blank');
 }

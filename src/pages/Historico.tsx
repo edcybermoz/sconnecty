@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   History, Calendar, Clock, Tag, Printer, FileDown, Filter,
@@ -21,9 +21,6 @@ import {
   getPaymentNumber,
 } from '@/lib/store';
 
-// ==============================
-// Configurações
-// ==============================
 const STATUS_CONFIG: Record<Order['status'], { label: string; color: string; icon: any }> = {
   pendente: {
     label: 'Pendente',
@@ -48,11 +45,10 @@ const PAYMENT_CONFIG: Record<NonNullable<PaymentMethod>, { label: string; color:
   later: { label: 'Pagar Depois', color: 'bg-blue-100 text-blue-700' },
 };
 
-// Chave do “login” simples por telefone
-const LS_PHONE_KEY = 'rockville_user_phone';
+const LS_PHONE_KEY = 'sconnecty_user_phone';
 
 const Historico = () => {
-  const [userPhone, setUserPhone] = useState<string>(''); // sempre limpo: 84xxxxxxx
+  const [userPhone, setUserPhone] = useState<string>('');
   const [showLogin, setShowLogin] = useState(false);
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -70,9 +66,6 @@ const Historico = () => {
     pending: 0,
   });
 
-  // ==============================
-  // 1) Carregar telefone “logado”
-  // ==============================
   useEffect(() => {
     const saved = localStorage.getItem(LS_PHONE_KEY);
     if (saved && validatePhoneNumber(saved)) {
@@ -84,16 +77,12 @@ const Historico = () => {
     }
   }, []);
 
-  // ==============================
-  // 2) Carregar pedidos do telefone logado
-  // ==============================
   const loadOrders = async (phoneClean: string) => {
     try {
       setLoading(true);
 
       const data = await getOrdersByPhone(phoneClean);
 
-      // Ordenar por data (mais recentes primeiro)
       const sorted = data.sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
@@ -121,14 +110,10 @@ const Historico = () => {
     }
   };
 
-  // Recarrega quando userPhone existir
   useEffect(() => {
     if (userPhone) loadOrders(userPhone);
   }, [userPhone]);
 
-  // ==============================
-  // 3) Filtragem + busca
-  // ==============================
   useEffect(() => {
     let filtered = orders;
 
@@ -149,9 +134,6 @@ const Historico = () => {
     setFilteredOrders(filtered);
   }, [filter, searchTerm, orders]);
 
-  // ==============================
-  // Helpers
-  // ==============================
   const getPaymentBadge = (method?: PaymentMethod) => {
     if (!method) return null;
     const config = PAYMENT_CONFIG[method as keyof typeof PAYMENT_CONFIG];
@@ -164,9 +146,6 @@ const Historico = () => {
     );
   };
 
-  // ==============================
-  // PRINT / PDF (sem "revendedor autorizado")
-  // ==============================
   const handlePrint = (order: Order) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -194,7 +173,7 @@ const Historico = () => {
         </head>
         <body>
           <div class="header">
-            <div class="title">ROCKVILLE MZ</div>
+            <div class="title">sConnecty</div>
             <div class="subtitle">Comprovativo de compra</div>
           </div>
 
@@ -245,7 +224,7 @@ const Historico = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('ROCKVILLE MZ', 105, 25, { align: 'center' });
+    doc.text('sConnecty', 105, 25, { align: 'center' });
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -291,7 +270,7 @@ const Historico = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('ROCKVILLE MZ', 105, 25, { align: 'center' });
+    doc.text('sConnecty', 105, 25, { align: 'center' });
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -329,9 +308,6 @@ const Historico = () => {
     doc.save('historico_compras.pdf');
   };
 
-  // ==============================
-  // Login simples por telefone (modal)
-  // ==============================
   const PhoneLoginModal = () => {
     const [phoneInput, setPhoneInput] = useState('');
     const [err, setErr] = useState('');
@@ -417,16 +393,12 @@ const Historico = () => {
     );
   };
 
-  // ==============================
-  // UI
-  // ==============================
   return (
     <>
       <Header />
 
       <div className="min-h-screen bg-background py-10 px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between gap-3 flex-wrap mb-6">
               <div className="flex items-center gap-3">
@@ -458,7 +430,6 @@ const Historico = () => {
               )}
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard icon={Package} label="Total" value={stats.total.toString()} color="bg-blue-500" />
               <StatCard icon={CheckCircle} label="Confirmadas" value={stats.confirmed.toString()} color="bg-green-500" />
@@ -467,7 +438,6 @@ const Historico = () => {
             </div>
           </div>
 
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -511,7 +481,6 @@ const Historico = () => {
             </div>
           </div>
 
-          {/* List */}
           {!userPhone ? (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -652,7 +621,6 @@ const Historico = () => {
         </div>
       </div>
 
-      {/* Modal detalhes */}
       <AnimatePresence>
         {selectedOrder && (
           <OrderDetailsModal
@@ -664,15 +632,13 @@ const Historico = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal login telefone */}
       <AnimatePresence>
         {showLogin && <PhoneLoginModal />}
       </AnimatePresence>
 
-      {/* Footer sem revendedor */}
       <footer className="bg-card border-t border-border py-8">
         <div className="container mx-auto px-4 text-center">
-          <p className="font-semibold text-foreground">© 2026 ROCKVILLE</p>
+          <p className="font-semibold text-foreground">© 2026 sConnecty</p>
           <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
           <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>
         </div>
@@ -681,9 +647,6 @@ const Historico = () => {
   );
 };
 
-// ==============================
-// UI Components
-// ==============================
 const StatCard = ({ icon: Icon, label, value, color }: any) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}

@@ -24,7 +24,6 @@ function parseDataToGB(data?: string): number | null {
 
   const normalized = data.toUpperCase().replace(/\s+/g, '').replace(',', '.');
 
-  // MB: "2.200MB", "12.100MB", "2200MB"
   const mbMatch = normalized.match(/(\d+(\.\d+)?)MB/);
   if (mbMatch) {
     const mbRaw = mbMatch[1].replace(/\./g, '');
@@ -33,7 +32,6 @@ function parseDataToGB(data?: string): number | null {
     return mb / 1024;
   }
 
-  // GB: "10.2GB"
   const gbMatch = normalized.match(/(\d+(\.\d+)?)GB/);
   if (gbMatch) {
     const gb = Number(gbMatch[1]);
@@ -65,6 +63,7 @@ function categoryLabel(cat: InternetPackage['category']) {
 const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
   const Provider = providerLabel(pkg.provider);
   const Category = categoryLabel(pkg.category);
+  const hasValidPrice = typeof pkg.price === 'number' && pkg.price > 0;
 
   const getCategoryIcon = () => {
     switch (pkg.category) {
@@ -85,7 +84,6 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
     }
   };
 
-  // Métrica principal e secundária
   const metricMain =
     pkg.category === 'giftcards'
       ? (pkg.notes ?? 'Código Digital')
@@ -100,10 +98,9 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
         ? (Provider ? `${Provider}${pkg.validity ? ` • ${pkg.validity}` : ''}` : (pkg.validity ?? ''))
         : (pkg.validity ?? '');
 
-  // MT/GB só para pacotes com data
   const gb = parseDataToGB(pkg.data);
   const showPricePerGB =
-    (pkg.category === 'diario' || pkg.category === 'mensal' || pkg.category === 'chamadas') && !!gb;
+    (pkg.category === 'diario' || pkg.category === 'mensal' || pkg.category === 'chamadas') && !!gb && hasValidPrice;
   const pricePerGB = showPricePerGB && gb ? Math.round(pkg.price / gb) : null;
 
   return (
@@ -117,10 +114,8 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
       }`}
       onClick={() => onBuy(pkg)}
     >
-      {/* Header do card (sem absolute) */}
       <div className="p-5 pb-0">
         <div className="flex items-start justify-between gap-3">
-          {/* Left: Popular (se existir) */}
           <div className="min-w-0">
             {pkg.popular && (
               <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-3 py-1 rounded-full vodacom-gradient text-primary-foreground shadow-sm">
@@ -130,7 +125,6 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
             )}
           </div>
 
-          {/* Right: Tags (provider + categoria) */}
           <div className="flex items-center gap-2 max-w-[60%] overflow-hidden">
             {Provider && (
               <span className="shrink min-w-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-border bg-background text-foreground truncate">
@@ -144,7 +138,6 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
         </div>
       </div>
 
-      {/* Conteúdo */}
       <div className="p-6 pt-5 flex flex-col min-h-[320px]">
         <div className="text-center">
           <div className="mx-auto w-14 h-14 rounded-2xl vodacom-gradient flex items-center justify-center shadow-sm">
@@ -166,7 +159,6 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
           )}
         </div>
 
-        {/* Trust row */}
         <div className="mt-5 flex items-center justify-center gap-4 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <CheckCircle className="h-3.5 w-3.5 text-green-500" />
@@ -180,7 +172,6 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
 
         <div className="mt-5 border-t border-border" />
 
-        {/* Bottom */}
         <div className="pt-5 mt-auto">
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
@@ -196,7 +187,7 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
 
             <div className="text-right shrink-0">
               <div className="text-xl font-extrabold text-foreground leading-none">
-                {formatMZN(pkg.price)}
+                {hasValidPrice ? formatMZN(pkg.price) : 'Sob consulta'}
               </div>
 
               <motion.button
@@ -208,7 +199,7 @@ const PackageCard = ({ pkg, onBuy, index }: PackageCardProps) => {
                   onBuy(pkg);
                 }}
               >
-                Comprar
+                {hasValidPrice ? 'Comprar' : 'Consultar'}
               </motion.button>
             </div>
           </div>
