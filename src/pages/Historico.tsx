@@ -1,9 +1,28 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  History, Calendar, Clock, Tag, Printer, FileDown, Filter,
-  Search, ChevronDown, Eye, Download, Smartphone, User,
-  CheckCircle, XCircle, AlertCircle, Package, DollarSign, X, LogIn
+  History,
+  Calendar,
+  Clock,
+  Tag,
+  Printer,
+  FileDown,
+  Filter,
+  Search,
+  ChevronDown,
+  Eye,
+  Download,
+  Smartphone,
+  User,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Package,
+  DollarSign,
+  Wifi,
+  X,
+  LogIn,
+  type LucideIcon,
 } from 'lucide-react';
 
 import Header from '@/components/Header';
@@ -21,25 +40,38 @@ import {
   getPaymentNumber,
 } from '@/lib/store';
 
-const STATUS_CONFIG: Record<Order['status'], { label: string; color: string; icon: any }> = {
+type OrderStatus = Order['status'];
+
+type StatusConfig = {
+  label: string;
+  color: string;
+  icon: LucideIcon;
+};
+
+type PaymentConfig = {
+  label: string;
+  color: string;
+};
+
+const STATUS_CONFIG: Record<OrderStatus, StatusConfig> = {
   pendente: {
     label: 'Pendente',
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    icon: AlertCircle
+    icon: AlertCircle,
   },
   confirmado: {
     label: 'Confirmado',
     color: 'bg-green-100 text-green-800 border-green-200',
-    icon: CheckCircle
+    icon: CheckCircle,
   },
   cancelado: {
     label: 'Cancelado',
     color: 'bg-red-100 text-red-800 border-red-200',
-    icon: XCircle
+    icon: XCircle,
   },
 };
 
-const PAYMENT_CONFIG: Record<NonNullable<PaymentMethod>, { label: string; color: string }> = {
+const PAYMENT_CONFIG: Record<NonNullable<PaymentMethod>, PaymentConfig> = {
   mpesa: { label: 'M-Pesa', color: 'bg-green-100 text-green-700' },
   emola: { label: 'E-Mola', color: 'bg-yellow-100 text-yellow-700' },
   later: { label: 'Pagar Depois', color: 'bg-blue-100 text-blue-700' },
@@ -47,19 +79,26 @@ const PAYMENT_CONFIG: Record<NonNullable<PaymentMethod>, { label: string; color:
 
 const LS_PHONE_KEY = 'sconnecty_user_phone';
 
+type Stats = {
+  total: number;
+  totalValue: number;
+  confirmed: number;
+  pending: number;
+};
+
 const Historico = () => {
-  const [userPhone, setUserPhone] = useState<string>('');
+  const [userPhone, setUserPhone] = useState('');
   const [showLogin, setShowLogin] = useState(false);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [filter, setFilter] = useState<Order['status'] | 'all'>('all');
+  const [filter, setFilter] = useState<OrderStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     totalValue: 0,
     confirmed: 0,
@@ -68,6 +107,7 @@ const Historico = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem(LS_PHONE_KEY);
+
     if (saved && validatePhoneNumber(saved)) {
       setUserPhone(saved);
       setShowLogin(false);
@@ -83,16 +123,16 @@ const Historico = () => {
 
       const data = await getOrdersByPhone(phoneClean);
 
-      const sorted = data.sort(
+      const sorted = [...data].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
       setOrders(sorted);
 
-      const confirmed = sorted.filter(o => o.status === 'confirmado').length;
-      const pending = sorted.filter(o => o.status === 'pendente').length;
+      const confirmed = sorted.filter((o) => o.status === 'confirmado').length;
+      const pending = sorted.filter((o) => o.status === 'pendente').length;
       const totalValue = sorted
-        .filter(o => o.status === 'confirmado')
+        .filter((o) => o.status === 'confirmado')
         .reduce((sum, o) => sum + (o.price || 0), 0);
 
       setStats({
@@ -104,31 +144,47 @@ const Historico = () => {
     } catch (err) {
       console.error('Erro ao carregar pedidos:', err);
       setOrders([]);
-      setStats({ total: 0, totalValue: 0, confirmed: 0, pending: 0 });
+      setFilteredOrders([]);
+      setStats({
+        total: 0,
+        totalValue: 0,
+        confirmed: 0,
+        pending: 0,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (userPhone) loadOrders(userPhone);
+    if (userPhone) {
+      void loadOrders(userPhone);
+    }
   }, [userPhone]);
 
   useEffect(() => {
-    let filtered = orders;
+    let filtered = [...orders];
 
     if (filter !== 'all') {
-      filtered = filtered.filter(order => order.status === filter);
+      filtered = filtered.filter((order) => order.status === filter);
     }
 
-    if (searchTerm) {
+    if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(order =>
-        order.reference?.toLowerCase().includes(term) ||
-        order.customerName?.toLowerCase().includes(term) ||
-        order.customerPhone?.includes(term) ||
-        order.packageName?.toLowerCase().includes(term)
-      );
+
+      filtered = filtered.filter((order) => {
+        const reference = order.reference?.toLowerCase() ?? '';
+        const customerName = order.customerName?.toLowerCase() ?? '';
+        const customerPhone = order.customerPhone ?? '';
+        const packageName = order.packageName?.toLowerCase() ?? '';
+
+        return (
+          reference.includes(term) ||
+          customerName.includes(term) ||
+          customerPhone.includes(term) ||
+          packageName.includes(term)
+        );
+      });
     }
 
     setFilteredOrders(filtered);
@@ -136,7 +192,8 @@ const Historico = () => {
 
   const getPaymentBadge = (method?: PaymentMethod) => {
     if (!method) return null;
-    const config = PAYMENT_CONFIG[method as keyof typeof PAYMENT_CONFIG];
+
+    const config = PAYMENT_CONFIG[method];
     if (!config) return null;
 
     return (
@@ -146,13 +203,16 @@ const Historico = () => {
     );
   };
 
+  const getPaymentLabel = (method?: PaymentMethod) => {
+    if (!method) return 'Não especificado';
+    return PAYMENT_CONFIG[method]?.label ?? 'Não especificado';
+  };
+
   const handlePrint = (order: Order) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const paymentMethod = order.paymentMethod
-      ? PAYMENT_CONFIG[order.paymentMethod as keyof typeof PAYMENT_CONFIG]?.label
-      : 'Não especificado';
+    const paymentMethod = getPaymentLabel(order.paymentMethod);
 
     printWindow.document.write(`
       <html>
@@ -164,9 +224,9 @@ const Historico = () => {
             .title { color: #ed1c24; font-size: 24px; font-weight: bold; margin-bottom: 5px; }
             .subtitle { color: #666; font-size: 14px; }
             .content { border: 1px solid #ddd; padding: 20px; border-radius: 10px; }
-            .row { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 5px 0; border-bottom: 1px dashed #eee; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 5px 0; border-bottom: 1px dashed #eee; gap: 16px; }
             .label { color: #666; font-weight: normal; }
-            .value { font-weight: bold; color: #333; }
+            .value { font-weight: bold; color: #333; text-align: right; }
             .status { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; }
             .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
           </style>
@@ -181,8 +241,8 @@ const Historico = () => {
             <div class="row"><span class="label">Referência:</span><span class="value">${order.reference}</span></div>
             <div class="row"><span class="label">Cliente:</span><span class="value">${order.customerName || 'N/A'}</span></div>
             <div class="row"><span class="label">Telefone:</span><span class="value">${order.customerPhone || 'N/A'}</span></div>
-            <div class="row"><span class="label">Produto:</span><span class="value">${order.packageName}</span></div>
-            <div class="row"><span class="label">Valor:</span><span class="value">${formatMZN(order.price)}</span></div>
+            <div class="row"><span class="label">Produto:</span><span class="value">${order.packageName || 'N/A'}</span></div>
+            <div class="row"><span class="label">Valor:</span><span class="value">${formatMZN(order.price || 0)}</span></div>
             <div class="row"><span class="label">Data:</span><span class="value">${formatDate(order.date)}</span></div>
             <div class="row"><span class="label">Pagamento:</span><span class="value">${paymentMethod}</span></div>
 
@@ -190,11 +250,17 @@ const Historico = () => {
               <span class="label">Status:</span>
               <span class="value">
                 <span class="status" style="background: ${
-                  order.status === 'confirmado' ? '#d4edda' :
-                  order.status === 'pendente' ? '#fff3cd' : '#f8d7da'
+                  order.status === 'confirmado'
+                    ? '#d4edda'
+                    : order.status === 'pendente'
+                    ? '#fff3cd'
+                    : '#f8d7da'
                 }; color: ${
-                  order.status === 'confirmado' ? '#155724' :
-                  order.status === 'pendente' ? '#856404' : '#721c24'
+                  order.status === 'confirmado'
+                    ? '#155724'
+                    : order.status === 'pendente'
+                    ? '#856404'
+                    : '#721c24'
                 }">
                   ${order.status.toUpperCase()}
                 </span>
@@ -208,15 +274,15 @@ const Historico = () => {
         </body>
       </html>
     `);
+
     printWindow.document.close();
+    printWindow.focus();
     printWindow.print();
   };
 
   const handleDownloadPDF = (order: Order) => {
     const doc = new jsPDF();
-    const paymentMethod = order.paymentMethod
-      ? PAYMENT_CONFIG[order.paymentMethod as keyof typeof PAYMENT_CONFIG]?.label
-      : 'Não especificado';
+    const paymentMethod = getPaymentLabel(order.paymentMethod);
 
     doc.setFillColor(237, 28, 36);
     doc.rect(0, 0, 210, 40, 'F');
@@ -239,11 +305,11 @@ const Historico = () => {
       startY: 65,
       head: [['Campo', 'Valor']],
       body: [
-        ['Referência', order.reference],
+        ['Referência', order.reference ?? 'N/A'],
         ['Cliente', order.customerName || 'N/A'],
         ['Telefone', order.customerPhone || 'N/A'],
-        ['Produto', order.packageName],
-        ['Valor', formatMZN(order.price)],
+        ['Produto', order.packageName || 'N/A'],
+        ['Valor', formatMZN(order.price || 0)],
         ['Data', formatDate(order.date)],
         ['Método Pagamento', paymentMethod],
         ['Status', order.status.toUpperCase()],
@@ -253,10 +319,16 @@ const Historico = () => {
       styles: { fontSize: 10 },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 150;
+    const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 150;
+
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
-    doc.text('Para mais informações, contacte +258 85 600 1899', 105, finalY + 20, { align: 'center' });
+    doc.text(
+      'Para mais informações, contacte +258 85 600 1899',
+      105,
+      finalY + 20,
+      { align: 'center' }
+    );
 
     doc.save(`compra_${order.reference}.pdf`);
   };
@@ -292,11 +364,11 @@ const Historico = () => {
     autoTable(doc, {
       startY: 105,
       head: [['Referência', 'Cliente', 'Produto', 'Valor', 'Data', 'Status']],
-      body: filteredOrders.map(order => [
-        order.reference,
+      body: filteredOrders.map((order) => [
+        order.reference ?? 'N/A',
         order.customerName || 'N/A',
-        order.packageName,
-        formatMZN(order.price),
+        order.packageName || 'N/A',
+        formatMZN(order.price || 0),
         formatDate(order.date),
         order.status.toUpperCase(),
       ]),
@@ -314,10 +386,12 @@ const Historico = () => {
 
     const onLogin = () => {
       const cleaned = cleanPhoneNumber(phoneInput);
+
       if (!cleaned || !validatePhoneNumber(cleaned)) {
         setErr('Número inválido. Use 84/85/86/87 + 7 dígitos (ex: 84 123 4567)');
         return;
       }
+
       localStorage.setItem(LS_PHONE_KEY, cleaned);
       setUserPhone(cleaned);
       setShowLogin(false);
@@ -342,10 +416,12 @@ const Historico = () => {
                   Informe o número para carregar as suas compras.
                 </p>
               </div>
+
               <button
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/15 transition-colors"
                 onClick={() => setShowLogin(false)}
                 aria-label="Fechar"
+                type="button"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -355,6 +431,7 @@ const Historico = () => {
           <div className="p-6 space-y-4">
             <div>
               <label className="text-sm font-semibold text-foreground">Seu número</label>
+
               <div className="mt-2 relative">
                 <Smartphone className="h-4 w-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
@@ -368,6 +445,7 @@ const Historico = () => {
                   inputMode="numeric"
                 />
               </div>
+
               {err && (
                 <p className="mt-2 text-sm text-red-500 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
@@ -379,6 +457,7 @@ const Historico = () => {
             <button
               onClick={onLogin}
               className="w-full vodacom-gradient text-white font-extrabold py-3 rounded-2xl inline-flex items-center justify-center gap-2 hover:opacity-95 transition-opacity"
+              type="button"
             >
               <LogIn className="h-5 w-5" />
               Entrar
@@ -405,10 +484,15 @@ const Historico = () => {
                 <div className="p-3 bg-primary/10 rounded-xl">
                   <History className="h-8 w-8 text-primary" />
                 </div>
+
                 <div>
-                  <h1 className="text-2xl font-extrabold text-foreground">Meu Histórico de Compras</h1>
+                  <h1 className="text-2xl font-extrabold text-foreground">
+                    Meu Histórico de Compras
+                  </h1>
                   <p className="text-sm text-muted-foreground">
-                    {userPhone ? `Telefone: ${formatPhoneNumber(userPhone)}` : 'Entre com o seu número para ver o histórico'}
+                    {userPhone
+                      ? `Telefone: ${formatPhoneNumber(userPhone)}`
+                      : 'Entre com o seu número para ver o histórico'}
                   </p>
                 </div>
               </div>
@@ -420,10 +504,16 @@ const Historico = () => {
                     setUserPhone('');
                     setOrders([]);
                     setFilteredOrders([]);
-                    setStats({ total: 0, totalValue: 0, confirmed: 0, pending: 0 });
+                    setStats({
+                      total: 0,
+                      totalValue: 0,
+                      confirmed: 0,
+                      pending: 0,
+                    });
                     setShowLogin(true);
                   }}
                   className="px-4 py-2 rounded-xl border border-border bg-card hover:bg-muted transition-colors text-sm font-semibold"
+                  type="button"
                 >
                   Trocar número
                 </button>
@@ -440,7 +530,7 @@ const Historico = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
                 type="text"
                 placeholder="Buscar por referência, pacote, cliente..."
@@ -453,11 +543,11 @@ const Historico = () => {
 
             <div className="flex gap-2">
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <select
                   className="pl-10 pr-8 py-2 rounded-xl border border-input bg-card focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
                   value={filter}
-                  onChange={e => setFilter(e.target.value as Order['status'] | 'all')}
+                  onChange={(e) => setFilter(e.target.value as OrderStatus | 'all')}
                   disabled={!userPhone}
                 >
                   <option value="all">Todos os status</option>
@@ -465,7 +555,7 @@ const Historico = () => {
                   <option value="confirmado">Confirmado</option>
                   <option value="cancelado">Cancelado</option>
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               </div>
 
               {filteredOrders.length > 0 && (
@@ -473,6 +563,7 @@ const Historico = () => {
                   onClick={handleDownloadAllPDF}
                   className="px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors flex items-center gap-2"
                   title="Exportar todos"
+                  type="button"
                 >
                   <Download className="h-4 w-4" />
                   <span className="hidden sm:inline">Exportar</span>
@@ -494,6 +585,7 @@ const Historico = () => {
               <button
                 onClick={() => setShowLogin(true)}
                 className="mt-2 vodacom-gradient text-white font-extrabold px-6 py-3 rounded-2xl"
+                type="button"
               >
                 Informar número
               </button>
@@ -524,6 +616,9 @@ const Historico = () => {
               <AnimatePresence>
                 {filteredOrders.map((order, index) => {
                   const StatusIcon = STATUS_CONFIG[order.status].icon;
+                  const formattedDate = formatDate(order.date).split(' ');
+                  const datePart = formattedDate[0] ?? '';
+                  const timePart = formattedDate[1] ?? '';
 
                   return (
                     <motion.div
@@ -540,17 +635,23 @@ const Historico = () => {
                             <span className="text-sm font-mono bg-primary/5 px-3 py-1 rounded-full text-primary font-semibold">
                               {order.reference}
                             </span>
-                            <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${STATUS_CONFIG[order.status].color}`}>
+
+                            <span
+                              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${STATUS_CONFIG[order.status].color}`}
+                            >
                               <StatusIcon className="h-3 w-3" />
                               {STATUS_CONFIG[order.status].label}
                             </span>
+
                             {getPaymentBadge(order.paymentMethod)}
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="flex items-center gap-2 text-sm">
                               <User className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{order.customerName || 'Cliente não informado'}</span>
+                              <span className="font-medium">
+                                {order.customerName || 'Cliente não informado'}
+                              </span>
                             </div>
 
                             <div className="flex items-center gap-2 text-sm">
@@ -566,11 +667,11 @@ const Historico = () => {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
-                                <span>{formatDate(order.date).split(' ')[0]}</span>
+                                <span>{datePart}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                <span>{formatDate(order.date).split(' ')[1]}</span>
+                                <span>{timePart}</span>
                               </div>
                             </div>
                           </div>
@@ -578,7 +679,7 @@ const Historico = () => {
 
                         <div className="flex flex-row lg:flex-col items-center lg:items-end gap-4 lg:gap-2">
                           <span className="text-2xl font-extrabold text-primary">
-                            {formatMZN(order.price)}
+                            {formatMZN(order.price || 0)}
                           </span>
 
                           <div className="flex gap-2">
@@ -586,6 +687,7 @@ const Historico = () => {
                               onClick={() => handlePrint(order)}
                               className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-primary hover:text-white transition-colors"
                               title="Imprimir comprovativo"
+                              type="button"
                             >
                               <Printer className="h-4 w-4" />
                             </button>
@@ -594,6 +696,7 @@ const Historico = () => {
                               onClick={() => handleDownloadPDF(order)}
                               className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
                               title="Baixar PDF"
+                              type="button"
                             >
                               <FileDown className="h-4 w-4" />
                             </button>
@@ -602,6 +705,7 @@ const Historico = () => {
                               onClick={() => setSelectedOrder(order)}
                               className="p-2 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors"
                               title="Ver detalhes"
+                              type="button"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
@@ -632,22 +736,67 @@ const Historico = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showLogin && <PhoneLoginModal />}
-      </AnimatePresence>
+      <AnimatePresence>{showLogin && <PhoneLoginModal />}</AnimatePresence>
 
-      <footer className="bg-card border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="font-semibold text-foreground">© 2026 sConnecty</p>
-          <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
-          <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>
+      <footer className="border-t border-border bg-card/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-10">
+          <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center gap-3 md:justify-start">
+                <div>
+                  <h3 className="text-lg font-extrabold tracking-tight text-foreground">
+                    sConnecty
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Internet • Chamadas • Streaming
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">Contactos</p>
+              <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <p>+258 85 600 1899</p>
+                <p>+258 86 281 5574</p>
+              </div>
+            </div>
+
+            <div className="text-center md:text-right">
+              <p className="text-sm font-semibold text-foreground">Pagamentos</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-end">
+                <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+                  Paga Fácil
+                </span>
+                <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+                  M-Pesa
+                </span>
+                <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+                  E-Mola
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-border pt-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              © 2026 sConnecty. Todos os direitos reservados.
+            </p>
+          </div>
         </div>
       </footer>
     </>
   );
 };
 
-const StatCard = ({ icon: Icon, label, value, color }: any) => (
+type StatCardProps = {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  color: string;
+};
+
+const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -661,11 +810,22 @@ const StatCard = ({ icon: Icon, label, value, color }: any) => (
   </motion.div>
 );
 
-const OrderDetailsModal = ({ order, onClose, onPrint, onDownload }: any) => {
-  const StatusIcon = STATUS_CONFIG[order.status].icon;
+type OrderDetailsModalProps = {
+  order: Order;
+  onClose: () => void;
+  onPrint: (order: Order) => void;
+  onDownload: (order: Order) => void;
+};
 
+const OrderDetailsModal = ({
+  order,
+  onClose,
+  onPrint,
+  onDownload,
+}: OrderDetailsModalProps) => {
+  const StatusIcon = STATUS_CONFIG[order.status].icon;
   const paymentMethod = order.paymentMethod
-    ? PAYMENT_CONFIG[order.paymentMethod as keyof typeof PAYMENT_CONFIG]?.label
+    ? PAYMENT_CONFIG[order.paymentMethod]?.label ?? 'Não especificado'
     : 'Não especificado';
 
   return (
@@ -689,7 +849,12 @@ const OrderDetailsModal = ({ order, onClose, onPrint, onDownload }: any) => {
               <h2 className="text-xl font-bold">Detalhes da Compra</h2>
               <p className="text-white/80 text-sm mt-1">{order.reference}</p>
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-lg transition-colors">
+
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+              type="button"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -698,7 +863,9 @@ const OrderDetailsModal = ({ order, onClose, onPrint, onDownload }: any) => {
         <div className="p-6 space-y-4">
           <div className="flex items-center justify-between pb-4 border-b border-border">
             <span className="text-muted-foreground">Status</span>
-            <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${STATUS_CONFIG[order.status].color}`}>
+            <span
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${STATUS_CONFIG[order.status].color}`}
+            >
               <StatusIcon className="h-4 w-4" />
               {STATUS_CONFIG[order.status].label}
             </span>
@@ -706,22 +873,31 @@ const OrderDetailsModal = ({ order, onClose, onPrint, onDownload }: any) => {
 
           <DetailRow icon={User} label="Cliente" value={order.customerName || 'Não informado'} />
           <DetailRow icon={Smartphone} label="Telefone" value={order.customerPhone || 'Não informado'} />
-          <DetailRow icon={Tag} label="Produto" value={order.packageName} />
-          <DetailRow icon={DollarSign} label="Valor" value={formatMZN(order.price)} />
+          <DetailRow icon={Tag} label="Produto" value={order.packageName || 'Não informado'} />
+          <DetailRow icon={DollarSign} label="Valor" value={formatMZN(order.price || 0)} />
           <DetailRow icon={Smartphone} label="Pagamento" value={paymentMethod} />
           <DetailRow icon={Calendar} label="Data" value={formatDate(order.date)} />
 
           <div className="flex gap-2 pt-4 border-t border-border">
             <button
-              onClick={() => { onPrint(order); onClose(); }}
+              onClick={() => {
+                onPrint(order);
+                onClose();
+              }}
               className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border border-border hover:bg-muted transition-colors"
+              type="button"
             >
               <Printer className="h-4 w-4" />
               Imprimir
             </button>
+
             <button
-              onClick={() => { onDownload(order); onClose(); }}
+              onClick={() => {
+                onDownload(order);
+                onClose();
+              }}
               className="flex-1 flex items-center justify-center gap-2 p-3 rounded-xl vodacom-gradient text-white hover:opacity-90 transition-opacity"
+              type="button"
             >
               <FileDown className="h-4 w-4" />
               PDF
@@ -733,7 +909,13 @@ const OrderDetailsModal = ({ order, onClose, onPrint, onDownload }: any) => {
   );
 };
 
-const DetailRow = ({ icon: Icon, label, value }: any) => (
+type DetailRowProps = {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+};
+
+const DetailRow = ({ icon: Icon, label, value }: DetailRowProps) => (
   <div className="flex items-center justify-between gap-4">
     <div className="flex items-center gap-2 text-muted-foreground">
       <Icon className="h-4 w-4" />

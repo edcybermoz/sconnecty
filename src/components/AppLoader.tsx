@@ -57,7 +57,7 @@ const AppLoader = () => {
           transition={{ delay: 0.15, duration: 0.4 }}
           className="mt-6 text-xl font-extrabold tracking-tight text-foreground"
         >
-          sConnecty MZ
+          sConnecty
         </motion.h2>
 
         <motion.p

@@ -1,10 +1,31 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, Package, Clock, CheckCircle, XCircle, Trash2,
-  RefreshCw, Edit3, DollarSign, AlertTriangle, Search,
-  ArrowUpDown, EyeOff, Eye, X, Smartphone, User, Tag,
-  LogOut, Copy, Calendar, Filter, Download
+  Shield,
+  Package,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  RefreshCw,
+  Edit3,
+  DollarSign,
+  AlertTriangle,
+  Search,
+  ArrowUpDown,
+  EyeOff,
+  Eye,
+  X,
+  Smartphone,
+  User,
+  Tag,
+  LogOut,
+  Copy,
+  Calendar,
+  Filter,
+  Download,
+  type LucideIcon,
+  Wifi,
 } from 'lucide-react';
 
 import Header from '@/components/Header';
@@ -12,25 +33,143 @@ import {
   getOrders,
   updateOrder,
   deleteOrder,
-  formatMZN,
   confirmPayment,
   cancelOrder,
   markAsPending,
   getOrderStats,
+  formatMZN,
   formatDate,
   validatePhoneNumber,
   cleanPhoneNumber,
-  getPaymentMethodLabel
+  getPaymentMethodLabel,
 } from '@/lib/store';
 import type { Order, OrderStats, PaymentMethod } from '@/lib/types';
 
 const ADMIN_PIN = '0698';
-
-// sessão admin
 const ADMIN_SESSION_KEY = 'sconnecty_admin_session';
 const SESSION_HOURS = 24;
 
 type DatePreset = 'all' | 'today' | '7d' | '30d';
+type FilterStatus = 'todos' | Order['status'];
+type SortBy = 'date' | 'price' | 'status';
+type SortOrder = 'asc' | 'desc';
+type QuickAction = 'confirm' | 'cancel' | 'pending';
+type PaymentFilter = PaymentMethod | 'all' | '';
+
+type StatCardProps = {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  color: string;
+};
+
+type OrderRowProps = {
+  order: Order;
+  onQuickAction: (id: string, action: QuickAction) => void;
+  onEdit: (order: Order) => void;
+  onDelete: (id: string) => void;
+  onView: (order: Order) => void;
+  statusBadge: (status: Order['status']) => ReactNode;
+  getPaymentMethodDisplay: (method?: PaymentMethod | null) => string;
+  onCopy: (text?: string | null) => void;
+};
+
+type SmallActionProps = {
+  onClick: () => void;
+  icon: LucideIcon;
+  title: string;
+};
+
+type ActionColor = 'green' | 'red' | 'yellow' | 'blue';
+
+type ActionButtonProps = {
+  onClick: () => void;
+  icon: LucideIcon;
+  color: ActionColor;
+  title: string;
+};
+
+type ModalProps = {
+  title: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  icon?: LucideIcon;
+  iconColor?: string;
+  children: ReactNode;
+};
+
+type ViewModalProps = {
+  order: Order;
+  onClose: () => void;
+  statusBadge: (status: Order['status']) => ReactNode;
+  paymentLabel: (method?: PaymentMethod | null) => string;
+  onCopy: (text?: string | null) => void;
+};
+
+type DetailProps = {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+};
+
+type EditModalProps = {
+  order: Order;
+  onClose: () => void;
+  onSave: (e: FormEvent<HTMLFormElement>) => void;
+  onChange: React.Dispatch<React.SetStateAction<Order | null>>;
+};
+
+const AppFooter = () => (
+  <footer className="border-t border-border bg-card/80 backdrop-blur-sm">
+    <div className="container mx-auto px-4 py-10">
+      <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+        <div className="text-center md:text-left">
+          <div className="flex items-center justify-center gap-3 md:justify-start">
+            <div>
+              <h3 className="text-lg font-extrabold tracking-tight text-foreground">
+                sConnecty
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Internet • Chamadas • Streaming
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm font-semibold text-foreground">Contactos</p>
+          <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+            <p>+258 85 600 1899</p>
+            <p>+258 86 281 5574</p>
+          </div>
+        </div>
+
+        <div className="text-center md:text-right">
+          <p className="text-sm font-semibold text-foreground">Pagamentos</p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-end">
+            <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+              Paga Fácil
+            </span>
+            <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+              M-Pesa
+            </span>
+            <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+              E-Mola
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 border-t border-border pt-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          © 2026 sConnecty. Todos os direitos reservados.
+        </p>
+      </div>
+    </div>
+  </footer>
+);
 
 const Admin = () => {
   const [authenticated, setAuthenticated] = useState(false);
@@ -40,8 +179,8 @@ const Admin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<OrderStats | null>(null);
 
-  const [filter, setFilter] = useState<'todos' | 'pendente' | 'confirmado' | 'cancelado'>('todos');
-  const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | 'all'>('all');
+  const [filter, setFilter] = useState<FilterStatus>('todos');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
   const [datePreset, setDatePreset] = useState<DatePreset>('all');
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -50,8 +189,8 @@ const Admin = () => {
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
 
   const [loading, setLoading] = useState(false);
-  const [sortBy] = useState<'date' | 'price' | 'status'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy] = useState<SortBy>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showStats, setShowStats] = useState(true);
 
   useEffect(() => {
@@ -59,7 +198,8 @@ const Admin = () => {
     if (!raw) return;
 
     try {
-      const { expiresAt } = JSON.parse(raw);
+      const { expiresAt } = JSON.parse(raw) as { expiresAt?: number };
+
       if (typeof expiresAt === 'number' && Date.now() < expiresAt) {
         setAuthenticated(true);
       } else {
@@ -84,9 +224,12 @@ const Admin = () => {
 
   const loadOrders = async () => {
     setLoading(true);
+
     try {
       const data = await getOrders();
-      const sorted = data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const sorted = [...data].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
       setOrders(sorted);
 
       const orderStats = await getOrderStats();
@@ -99,11 +242,14 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (authenticated) loadOrders();
+    if (authenticated) {
+      void loadOrders();
+    }
   }, [authenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (pin === ADMIN_PIN) {
       setAuthenticated(true);
       saveSession();
@@ -112,7 +258,7 @@ const Admin = () => {
     }
   };
 
-  const handleQuickAction = async (id: string, action: 'confirm' | 'cancel' | 'pending') => {
+  const handleQuickAction = async (id: string, action: QuickAction) => {
     try {
       switch (action) {
         case 'confirm':
@@ -125,6 +271,7 @@ const Admin = () => {
           await markAsPending(id);
           break;
       }
+
       await loadOrders();
     } catch (err) {
       console.error('Erro na ação rápida:', err);
@@ -141,7 +288,7 @@ const Admin = () => {
     }
   };
 
-  const handleEditSave = async (e: React.FormEvent) => {
+  const handleEditSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingOrder) return;
 
@@ -157,6 +304,7 @@ const Admin = () => {
         customerPhone: cleanedPhone,
         status: editingOrder.status,
       });
+
       setEditingOrder(null);
       await loadOrders();
     } catch (err) {
@@ -190,59 +338,92 @@ const Admin = () => {
   };
 
   const filteredAndSorted = useMemo(() => {
-    return orders
-      .filter(o => filter === 'todos' || o.status === filter)
-      .filter(o => paymentFilter === 'all' || (o.paymentMethod ?? null) === paymentFilter)
-      .filter(o => withinPreset(o.date))
-      .filter(o =>
-        searchTerm === '' ||
-        o.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customerPhone?.includes(searchTerm) ||
-        o.packageName?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    const term = searchTerm.toLowerCase();
+
+    return [...orders]
+      .filter((o) => filter === 'todos' || o.status === filter)
+      .filter((o) => {
+        if (paymentFilter === 'all') return true;
+        if (paymentFilter === '') return !o.paymentMethod;
+        return (o.paymentMethod ?? '') === paymentFilter;
+      })
+      .filter((o) => withinPreset(o.date))
+      .filter((o) => {
+        if (term === '') return true;
+
+        return (
+          o.reference?.toLowerCase().includes(term) ||
+          o.customerName?.toLowerCase().includes(term) ||
+          o.customerPhone?.includes(searchTerm) ||
+          o.packageName?.toLowerCase().includes(term)
+        );
+      })
       .sort((a, b) => {
         if (sortBy === 'date') {
           return sortOrder === 'desc'
             ? new Date(b.date).getTime() - new Date(a.date).getTime()
             : new Date(a.date).getTime() - new Date(b.date).getTime();
         }
+
         if (sortBy === 'price') {
           return sortOrder === 'desc'
             ? (b.price || 0) - (a.price || 0)
             : (a.price || 0) - (b.price || 0);
         }
+
+        if (sortBy === 'status') {
+          return sortOrder === 'desc'
+            ? b.status.localeCompare(a.status)
+            : a.status.localeCompare(b.status);
+        }
+
         return 0;
       });
   }, [orders, filter, paymentFilter, datePreset, searchTerm, sortBy, sortOrder]);
 
   const statusBadge = (status: Order['status']) => {
-    const styles = {
+    const styles: Record<Order['status'], string> = {
       pendente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       confirmado: 'bg-green-100 text-green-800 border-green-200',
       cancelado: 'bg-red-100 text-red-800 border-red-200',
     };
-    const labels = {
+
+    const labels: Record<Order['status'], string> = {
       pendente: 'Pendente',
       confirmado: 'Confirmado',
       cancelado: 'Cancelado',
     };
+
     return (
-      <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${styles[status] || ''}`}>
-        {labels[status] || status}
+      <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${styles[status]}`}>
+        {labels[status]}
       </span>
     );
   };
 
-  const copy = async (text: string) => {
+  const copy = async (text?: string | null) => {
+    if (!text) return;
+
     try {
       await navigator.clipboard.writeText(text);
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao copiar:', err);
+    }
   };
 
   const exportCSV = () => {
-    const header = ['Referencia', 'Cliente', 'Telefone', 'Pacote', 'Valor', 'Data', 'Status', 'Pagamento'];
-    const rows = filteredAndSorted.map(o => [
+    const header = [
+      'Referencia',
+      'Cliente',
+      'Telefone',
+      'Pacote',
+      'Valor',
+      'Data',
+      'Status',
+      'Pagamento',
+    ];
+
+    const rows = filteredAndSorted.map((o) => [
       o.reference ?? '',
       o.customerName ?? '',
       o.customerPhone ?? '',
@@ -254,7 +435,7 @@ const Admin = () => {
     ]);
 
     const csv = [header, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -264,14 +445,16 @@ const Admin = () => {
     a.href = url;
     a.download = `pedidos_admin_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
+
     URL.revokeObjectURL(url);
   };
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="flex items-center justify-center min-h-[70vh] px-4">
+
+        <div className="flex-1 flex items-center justify-center min-h-[70vh] px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -315,13 +498,7 @@ const Admin = () => {
           </motion.div>
         </div>
 
-        <footer className="bg-card border-t border-border py-8 mt-auto">
-          <div className="container mx-auto px-4 text-center">
-            <p className="font-semibold text-foreground">© 2026 sConnecty — Moçambique</p>
-            <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
-            <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>
-          </div>
-        </footer>
+        <AppFooter />
       </div>
     );
   }
@@ -342,6 +519,7 @@ const Admin = () => {
               onClick={() => setShowStats(!showStats)}
               className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               title={showStats ? 'Ocultar estatísticas' : 'Mostrar estatísticas'}
+              type="button"
             >
               {showStats ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -350,6 +528,7 @@ const Admin = () => {
               onClick={loadOrders}
               className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               title="Atualizar"
+              type="button"
             >
               <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -358,6 +537,7 @@ const Admin = () => {
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               className="p-2 rounded-xl bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
               title="Ordenar por data"
+              type="button"
             >
               <ArrowUpDown className="h-5 w-5" />
             </button>
@@ -367,6 +547,7 @@ const Admin = () => {
               disabled={filteredAndSorted.length === 0}
               className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
               title="Exportar CSV"
+              type="button"
             >
               <Download className="h-5 w-5" />
             </button>
@@ -375,6 +556,7 @@ const Admin = () => {
               onClick={logout}
               className="p-2 rounded-xl bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white transition-colors"
               title="Terminar sessão"
+              type="button"
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -422,8 +604,8 @@ const Admin = () => {
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <select
-                value={paymentFilter ?? 'all'}
-                onChange={(e) => setPaymentFilter(e.target.value as any)}
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value as PaymentFilter)}
                 className="bg-transparent text-sm outline-none"
               >
                 <option value="all">Todos pagamentos</option>
@@ -436,12 +618,15 @@ const Admin = () => {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-            {(['todos', 'pendente', 'confirmado', 'cancelado'] as const).map(f => (
+            {(['todos', 'pendente', 'confirmado', 'cancelado'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
+                type="button"
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
-                  filter === f ? 'vodacom-gradient text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'
+                  filter === f
+                    ? 'vodacom-gradient text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 {f === 'todos' ? 'Todos' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -463,7 +648,7 @@ const Admin = () => {
               <p className="text-sm mt-1">Tente ajustar os filtros ou buscar por outro termo</p>
             </div>
           ) : (
-            filteredAndSorted.map(order => (
+            filteredAndSorted.map((order) => (
               <OrderRow
                 key={order.id}
                 order={order}
@@ -490,7 +675,7 @@ const Admin = () => {
             <Modal
               title="Confirmar Exclusão"
               onClose={() => setDeleteConfirm(null)}
-              onConfirm={() => handleDelete(deleteConfirm)}
+              onConfirm={() => void handleDelete(deleteConfirm)}
               confirmText="Excluir"
               cancelText="Cancelar"
               icon={AlertTriangle}
@@ -499,7 +684,9 @@ const Admin = () => {
               <p className="text-center text-foreground">
                 Tem certeza que deseja excluir este pedido?
                 <br />
-                <span className="text-sm text-muted-foreground">Esta ação não pode ser desfeita.</span>
+                <span className="text-sm text-muted-foreground">
+                  Esta ação não pode ser desfeita.
+                </span>
               </p>
             </Modal>
           )}
@@ -525,19 +712,17 @@ const Admin = () => {
         </AnimatePresence>
       </div>
 
-      <footer className="bg-card border-t border-border py-8 mt-auto">
-        <div className="container mx-auto px-4 text-center">
-          <p className="font-semibold text-foreground">© 2026 sConnecty</p>
-          <p className="mt-2 text-muted-foreground">WhatsApp: +258 85 600 1899 | +258 86 281 5574</p>
-          <p className="mt-1 text-muted-foreground/70 text-sm">Paga Fácil | M-Pesa | E-Mola</p>
-        </div>
-      </footer>
+      <AppFooter />
     </div>
   );
 };
 
-const StatCard = ({ label, value, icon: Icon, color }: any) => (
-  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-shadow">
+const StatCard = ({ label, value, icon: Icon, color }: StatCardProps) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-card rounded-2xl p-4 shadow-sm border border-border hover:shadow-md transition-shadow"
+  >
     <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-2`}>
       <Icon className="h-5 w-5 text-white" />
     </div>
@@ -546,8 +731,21 @@ const StatCard = ({ label, value, icon: Icon, color }: any) => (
   </motion.div>
 );
 
-const OrderRow = ({ order, onQuickAction, onEdit, onDelete, onView, statusBadge, getPaymentMethodDisplay, onCopy }: any) => (
-  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-2xl border border-border p-4 shadow-sm hover:shadow-md transition-shadow">
+const OrderRow = ({
+  order,
+  onQuickAction,
+  onEdit,
+  onDelete,
+  onView,
+  statusBadge,
+  getPaymentMethodDisplay,
+  onCopy,
+}: OrderRowProps) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-card rounded-2xl border border-border p-4 shadow-sm hover:shadow-md transition-shadow"
+  >
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -571,21 +769,43 @@ const OrderRow = ({ order, onQuickAction, onEdit, onDelete, onView, statusBadge,
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
         <span className="text-lg font-extrabold text-foreground">{formatMZN(order.price || 0)}</span>
 
         <div className="flex items-center gap-1">
           {order.status === 'pendente' && (
             <>
-              <ActionButton onClick={() => onQuickAction(order.id, 'confirm')} icon={CheckCircle} color="green" title="Confirmar pagamento" />
-              <ActionButton onClick={() => onQuickAction(order.id, 'cancel')} icon={XCircle} color="red" title="Cancelar pedido" />
+              <ActionButton
+                onClick={() => onQuickAction(order.id, 'confirm')}
+                icon={CheckCircle}
+                color="green"
+                title="Confirmar pagamento"
+              />
+              <ActionButton
+                onClick={() => onQuickAction(order.id, 'cancel')}
+                icon={XCircle}
+                color="red"
+                title="Cancelar pedido"
+              />
             </>
           )}
+
           {order.status === 'confirmado' && (
-            <ActionButton onClick={() => onQuickAction(order.id, 'pending')} icon={Clock} color="yellow" title="Reverter para pendente" />
+            <ActionButton
+              onClick={() => onQuickAction(order.id, 'pending')}
+              icon={Clock}
+              color="yellow"
+              title="Reverter para pendente"
+            />
           )}
+
           {order.status === 'cancelado' && (
-            <ActionButton onClick={() => onQuickAction(order.id, 'pending')} icon={RefreshCw} color="blue" title="Reativar pedido" />
+            <ActionButton
+              onClick={() => onQuickAction(order.id, 'pending')}
+              icon={RefreshCw}
+              color="blue"
+              title="Reativar pedido"
+            />
           )}
         </div>
 
@@ -596,38 +816,80 @@ const OrderRow = ({ order, onQuickAction, onEdit, onDelete, onView, statusBadge,
   </motion.div>
 );
 
-const SmallAction = ({ onClick, icon: Icon, title }: any) => (
-  <button onClick={onClick} title={title} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-xl border border-border hover:bg-muted transition-colors">
+const SmallAction = ({ onClick, icon: Icon, title }: SmallActionProps) => (
+  <button
+    onClick={onClick}
+    title={title}
+    type="button"
+    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-xl border border-border hover:bg-muted transition-colors"
+  >
     <Icon className="h-4 w-4 text-muted-foreground" />
     <span className="text-muted-foreground">{title}</span>
   </button>
 );
 
-const ActionButton = ({ onClick, icon: Icon, color, title }: any) => {
-  const colors = {
+const ActionButton = ({ onClick, icon: Icon, color, title }: ActionButtonProps) => {
+  const colors: Record<ActionColor, string> = {
     green: 'bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white',
     red: 'bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white',
     yellow: 'bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500 hover:text-white',
     blue: 'bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white',
   };
+
   return (
-    <button onClick={onClick} className={`p-2 rounded-xl transition-colors ${colors[color]}`} title={title}>
+    <button
+      onClick={onClick}
+      className={`p-2 rounded-xl transition-colors ${colors[color]}`}
+      title={title}
+      type="button"
+    >
       <Icon className="h-4 w-4" />
     </button>
   );
 };
 
-const Modal = ({ title, onClose, onConfirm, confirmText, cancelText, icon: Icon, iconColor, children }: any) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-    <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }} className="bg-card rounded-3xl shadow-xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-      {Icon && <Icon className={`mx-auto mb-4 h-12 w-12 ${iconColor}`} />}
+const Modal = ({
+  title,
+  onClose,
+  onConfirm,
+  confirmText,
+  cancelText,
+  icon: Icon,
+  iconColor,
+  children,
+}: ModalProps) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.94, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.94, opacity: 0 }}
+      className="bg-card rounded-3xl shadow-xl p-6 max-w-sm w-full"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {Icon && <Icon className={`mx-auto mb-4 h-12 w-12 ${iconColor || ''}`} />}
       <h3 className="text-lg font-bold text-foreground text-center mb-4">{title}</h3>
+
       {children}
+
       <div className="flex gap-2 justify-center mt-6">
-        <button onClick={onClose} className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
+          type="button"
+        >
           {cancelText || 'Cancelar'}
         </button>
-        <button onClick={onConfirm} className="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity">
+        <button
+          onClick={onConfirm}
+          className="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity"
+          type="button"
+        >
           {confirmText || 'Confirmar'}
         </button>
       </div>
@@ -635,15 +897,37 @@ const Modal = ({ title, onClose, onConfirm, confirmText, cancelText, icon: Icon,
   </motion.div>
 );
 
-const ViewModal = ({ order, onClose, statusBadge, paymentLabel, onCopy }: any) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-    <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }} className="bg-card rounded-3xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+const ViewModal = ({
+  order,
+  onClose,
+  statusBadge,
+  paymentLabel,
+  onCopy,
+}: ViewModalProps) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.94, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.94, opacity: 0 }}
+      className="bg-card rounded-3xl shadow-xl p-6 w-full max-w-md"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <h2 className="text-lg font-extrabold text-foreground">Detalhes</h2>
           <p className="text-sm text-muted-foreground">{order.reference}</p>
         </div>
-        <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-xl hover:bg-muted transition-colors"
+          type="button"
+        >
           <X className="h-5 w-5 text-muted-foreground" />
         </button>
       </div>
@@ -664,11 +948,19 @@ const ViewModal = ({ order, onClose, statusBadge, paymentLabel, onCopy }: any) =
       </div>
 
       <div className="mt-6 flex gap-2">
-        <button onClick={() => onCopy(order.reference)} className="flex-1 px-4 py-3 rounded-2xl border border-border hover:bg-muted transition-colors font-semibold inline-flex items-center justify-center gap-2">
+        <button
+          onClick={() => onCopy(order.reference)}
+          className="flex-1 px-4 py-3 rounded-2xl border border-border hover:bg-muted transition-colors font-semibold inline-flex items-center justify-center gap-2"
+          type="button"
+        >
           <Copy className="h-4 w-4" />
           Copiar ref
         </button>
-        <button onClick={() => onCopy(order.customerPhone)} className="flex-1 px-4 py-3 rounded-2xl vodacom-gradient text-white font-extrabold inline-flex items-center justify-center gap-2">
+        <button
+          onClick={() => onCopy(order.customerPhone)}
+          className="flex-1 px-4 py-3 rounded-2xl vodacom-gradient text-white font-extrabold inline-flex items-center justify-center gap-2"
+          type="button"
+        >
           <Smartphone className="h-4 w-4" />
           Copiar tel
         </button>
@@ -677,7 +969,7 @@ const ViewModal = ({ order, onClose, statusBadge, paymentLabel, onCopy }: any) =
   </motion.div>
 );
 
-const Detail = ({ icon: Icon, label, value }: any) => (
+const Detail = ({ icon: Icon, label, value }: DetailProps) => (
   <div className="flex items-center justify-between gap-4">
     <div className="flex items-center gap-2 text-muted-foreground">
       <Icon className="h-4 w-4" />
@@ -687,23 +979,44 @@ const Detail = ({ icon: Icon, label, value }: any) => (
   </div>
 );
 
-const EditModal = ({ order, onClose, onSave, onChange }: any) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-    <motion.form initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.94, opacity: 0 }} onSubmit={onSave} className="bg-card rounded-3xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+const EditModal = ({ order, onClose, onSave, onChange }: EditModalProps) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    onClick={onClose}
+  >
+    <motion.form
+      initial={{ scale: 0.94, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.94, opacity: 0 }}
+      onSubmit={onSave}
+      className="bg-card rounded-3xl shadow-xl p-6 w-full max-w-md"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold text-foreground">Editar Pedido</h2>
-        <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-muted transition-colors">
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-muted transition-colors"
+        >
           <X className="h-5 w-5 text-muted-foreground" />
         </button>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Nome do Cliente</label>
+          <label className="block text-sm font-medium text-foreground mb-1">
+            Nome do Cliente
+          </label>
           <input
             type="text"
-            value={order.customerName}
-            onChange={e => onChange({ ...order, customerName: e.target.value })}
+            value={order.customerName || ''}
+            onChange={(e) =>
+              onChange((prev) => (prev ? { ...prev, customerName: e.target.value } : prev))
+            }
             className="w-full px-4 py-3 rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             required
           />
@@ -713,8 +1026,10 @@ const EditModal = ({ order, onClose, onSave, onChange }: any) => (
           <label className="block text-sm font-medium text-foreground mb-1">Telefone</label>
           <input
             type="tel"
-            value={order.customerPhone}
-            onChange={e => onChange({ ...order, customerPhone: e.target.value })}
+            value={order.customerPhone || ''}
+            onChange={(e) =>
+              onChange((prev) => (prev ? { ...prev, customerPhone: e.target.value } : prev))
+            }
             className="w-full px-4 py-3 rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             required
           />
@@ -725,7 +1040,11 @@ const EditModal = ({ order, onClose, onSave, onChange }: any) => (
           <label className="block text-sm font-medium text-foreground mb-1">Status</label>
           <select
             value={order.status}
-            onChange={e => onChange({ ...order, status: e.target.value as Order['status'] })}
+            onChange={(e) =>
+              onChange((prev) =>
+                prev ? { ...prev, status: e.target.value as Order['status'] } : prev
+              )
+            }
             className="w-full px-4 py-3 rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="pendente">Pendente</option>
@@ -736,10 +1055,17 @@ const EditModal = ({ order, onClose, onSave, onChange }: any) => (
       </div>
 
       <div className="flex gap-2 justify-end mt-6">
-        <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:bg-muted transition-colors"
+        >
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 rounded-xl vodacom-gradient text-white font-extrabold hover:opacity-90 transition-opacity">
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-xl vodacom-gradient text-white font-extrabold hover:opacity-90 transition-opacity"
+        >
           Salvar
         </button>
       </div>

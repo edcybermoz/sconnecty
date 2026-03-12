@@ -55,7 +55,6 @@ const Header = () => {
               <div className="leading-tight">
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg font-extrabold tracking-tight text-white">sConnecty</span>
-                  <span className="text-xs font-semibold text-white/70">MZ</span>
                 </div>
 
                 <span className="hidden sm:block text-[11px] text-white/70">

@@ -130,7 +130,6 @@ const Index = () => {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-2 text-white/60 text-sm">
-              <span className="px-3 py-1 bg-white/5 rounded-full">✓ Paga Fácil</span>
               <span className="px-3 py-1 bg-white/5 rounded-full">✓ M-Pesa</span>
               <span className="px-3 py-1 bg-white/5 rounded-full">✓ E-Mola</span>
               <span className="px-3 py-1 bg-white/5 rounded-full">✓ Ativação imediata</span>
@@ -361,12 +360,9 @@ const Index = () => {
     <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
       <div className="text-center md:text-left">
         <div className="flex items-center justify-center gap-3 md:justify-start">
-          <div className="rounded-2xl bg-vodacom-red/10 p-2.5">
-            <Wifi className="h-5 w-5 text-vodacom-red" />
-          </div>
           <div>
             <h3 className="text-lg font-extrabold tracking-tight text-foreground">
-              sConnecty MZ
+              sConnecty
             </h3>
             <p className="text-sm text-muted-foreground">
               Internet • Chamadas • Streaming
@@ -401,7 +397,7 @@ const Index = () => {
 
     <div className="mt-8 border-t border-border pt-4 text-center">
       <p className="text-sm text-muted-foreground">
-        © 2026 sConnecty MZ. Todos os direitos reservados.
+        © 2026 sConnecty. Todos os direitos reservados.
       </p>
     </div>
   </div>
