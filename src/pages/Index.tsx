@@ -17,6 +17,7 @@ import {
 import Header from '@/components/Header';
 import PackageCard from '@/components/PackageCard';
 import CheckoutModal from '@/components/CheckoutModal';
+import SConnectyAI from '@/components/SConnectyAI';
 import { internetPackages } from '@/lib/store';
 import type { InternetPackage } from '@/lib/types';
 import heroBg from '@/assets/hero-bg.jpg';
@@ -355,53 +356,58 @@ const Index = () => {
         </motion.div>
       </section>
 
-<footer className="border-t border-border bg-card/80 backdrop-blur-sm">
-  <div className="container mx-auto px-4 py-10">
-    <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-      <div className="text-center md:text-left">
-        <div className="flex items-center justify-center gap-3 md:justify-start">
-          <div>
-            <h3 className="text-lg font-extrabold tracking-tight text-foreground">
-              sConnecty
-            </h3>
+      <footer className="border-t border-border bg-card/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-10">
+          <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center gap-3 md:justify-start">
+                <div>
+                  <h3 className="text-lg font-extrabold tracking-tight text-foreground">
+                    sConnecty
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Internet • Chamadas • Streaming
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">Contactos</p>
+              <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <p>+258 85 600 1899</p>
+                <p>+258 86 281 5574</p>
+              </div>
+            </div>
+
+            <div className="text-center md:text-right">
+              <p className="text-sm font-semibold text-foreground">Pagamentos</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-end">
+                <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+                  Paga Fácil
+                </span>
+                <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+                  M-Pesa
+                </span>
+                <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
+                  E-Mola
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-border pt-4 text-center">
             <p className="text-sm text-muted-foreground">
-              Internet • Chamadas • Streaming
+              © 2026 sConnecty. Todos os direitos reservados.
             </p>
           </div>
         </div>
-      </div>
+      </footer>
 
-      <div className="text-center">
-        <p className="text-sm font-semibold text-foreground">Contactos</p>
-        <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-          <p>+258 85 600 1899</p>
-          <p>+258 86 281 5574</p>
-        </div>
-      </div>
-
-      <div className="text-center md:text-right">
-        <p className="text-sm font-semibold text-foreground">Pagamentos</p>
-        <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-end">
-          <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
-            Paga Fácil
-          </span>
-          <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
-            M-Pesa
-          </span>
-          <span className="rounded-full bg-vodacom-red/10 px-3 py-1 text-xs font-semibold text-vodacom-red">
-            E-Mola
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div className="mt-8 border-t border-border pt-4 text-center">
-      <p className="text-sm text-muted-foreground">
-        © 2026 sConnecty. Todos os direitos reservados.
-      </p>
-    </div>
-  </div>
-</footer>
+      <SConnectyAI
+        packages={internetPackages}
+        onSelectPackage={setSelectedPkg}
+      />
 
       {selectedPkg && (
         <CheckoutModal

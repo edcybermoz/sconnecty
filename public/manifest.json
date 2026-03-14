@@ -1,21 +1,25 @@
 {
-  "name": "ROCKVILLE - INTERNET & CHAMADAS ILIMITADAS",
-  "short_name": "ROCKVILLE",
-  "description": "Compre Pacotes de Internet Vodacom",
+  "name": "sConnecty - Internet, Chamadas e Serviços Digitais",
+  "short_name": "sConnecty",
+  "description": "Compre pacotes de internet, chamadas, streaming e serviços digitais em Moçambique.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#E60000",
+  "background_color": "#ffffff",
   "theme_color": "#E60000",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

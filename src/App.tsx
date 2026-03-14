@@ -9,6 +9,7 @@ import Admin from "./pages/Admin";
 import Historico from "./pages/Historico";
 import NotFound from "./pages/NotFound";
 import AppLoader from "@/components/AppLoader";
+import InstallPWAButton from "@/components/InstallPWAButton";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,8 @@ const App = () => {
             <Route path="/historico" element={<Historico />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+
+          <InstallPWAButton />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
